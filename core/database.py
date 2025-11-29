@@ -56,6 +56,12 @@ class VectorDB:
             st.error("⚠️ Database Wajah Offline. Cek Secrets!")
             return None, 0.0
         # ----------------
+
+        import inspect
+        st.write("🕵️‍♂️ DEBUG INFO QDRANT:")
+        st.write(f"Tipe Object: {type(self.client)}")
+        st.write(f"Lokasi File Asli: {inspect.getfile(self.client.__class__)}")
+        st.write(f"Daftar Fungsi: {dir(self.client)}")
         
         try:
             results = self.client.search(
