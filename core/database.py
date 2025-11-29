@@ -51,18 +51,24 @@ class VectorDB:
         return True
 
     def search_user(self, embedding, threshold=0.5):
-        # --- PENGAMAN ---
         if self.client is None:
-            st.error("⚠️ Database Wajah Offline. Cek Secrets!")
+            st.error("⚠️ Database Wajah Offline.")
             return None, 0.0
-        # ----------------
-
-        import inspect
-        st.write("🕵️‍♂️ DEBUG INFO QDRANT:")
-        st.write(f"Tipe Object: {type(self.client)}")
-        st.write(f"Lokasi File Asli: {inspect.getfile(self.client.__class__)}")
-        st.write(f"Daftar Fungsi: {dir(self.client)}")
         
+        # --- DIAGNOSTIK: CEK ISI PERUT QDRANT ---
+        # Kita akan melihat daftar method yang tersedia
+        available_methods = dir(self.client)
+        
+        # Cek apakah ada kata 'search' di dalam daftar tersebut
+        has_search = 'search' in available_methods
+        
+        if not has_search:
+            st.error("SOS! Method .search() HILANG dari QdrantClient!")
+            st.write("Daftar method yang tersedia (Cek apakah ada yang mirip):")
+            st.code(available_methods) # Tampilkan semua ke layar
+            st.stop()
+        # ----------------------------------------
+
         try:
             results = self.client.search(
                 collection_name=self.collection_name,
@@ -74,5 +80,5 @@ class VectorDB:
                 return results[0].payload['username'], results[0].score
             return None, 0.0
         except Exception as e:
-            st.error(f"Error saat mencari wajah: {e}")
+            st.error(f"Error search: {e}")
             return None, 0.0
