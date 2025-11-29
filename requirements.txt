@@ -3,7 +3,7 @@ streamlit
 pandas
 haversine
 opencv-python-headless
-qdrant-client>=1.7.0
+qdrant-client
 gspread
 oauth2client
 geopy

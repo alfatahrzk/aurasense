@@ -1,8 +1,12 @@
 # Home.py
 import streamlit as st
-import qdrant_client
+import importlib.metadata
 
-st.warning(f"Versi Qdrant Client yang terinstall: {qdrant_client.__version__}")
+try:
+    version = importlib.metadata.version("qdrant-client")
+    st.success(f"✅ Qdrant Client Terinstall: v{version}")
+except importlib.metadata.PackageNotFoundError:
+    st.error("❌ Library qdrant-client TIDAK TERDETEKSI!")
 
 st.set_page_config(
     page_title="Sistem Absensi AI",
