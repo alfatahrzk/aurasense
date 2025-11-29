@@ -2,12 +2,13 @@
 import streamlit as st
 from streamlit_js_eval import get_geolocation
 import requests
-from geopy.geocoders import Nominatim # <--- Import Baru
+# Ganti import: Dari Nominatim ke ArcGIS
+from geopy.geocoders import ArcGIS 
 
 class LocationService:
     def __init__(self):
-        # Inisialisasi Geocoder (Wajib pakai user_agent unik)
-        self.geolocator = Nominatim(user_agent="skripsi_absensi_app_v1")
+        # Menggunakan ArcGIS karena lebih stabil dan tidak gampang Connection Refused
+        self.geolocator = ArcGIS()
 
     def get_coordinates(self):
         """
@@ -16,17 +17,21 @@ class LocationService:
         lat, lon, source = None, None, None
 
         # 1. GPS BROWSER
-        loc_data = get_geolocation(component_key='get_gps_loc')
-
-        if loc_data and 'coords' in loc_data:
-            lat = loc_data['coords']['latitude']
-            lon = loc_data['coords']['longitude']
-            source = "GPS (Akurasi Tinggi)"
-            return lat, lon, source
+        try:
+            loc_data = get_geolocation(component_key='get_gps_loc')
+            
+            if loc_data and 'coords' in loc_data:
+                lat = loc_data['coords']['latitude']
+                lon = loc_data['coords']['longitude']
+                source = "GPS (Akurasi Tinggi)"
+                return lat, lon, source
+        except:
+            pass # Lanjut ke fallback jika JS gagal
 
         # 2. IP ADDRESS (FALLBACK)
         try:
-            response = requests.get('http://ip-api.com/json/', timeout=3)
+            # Ganti timeout jadi lebih pendek biar gak lama nunggu
+            response = requests.get('http://ip-api.com/json/', timeout=2)
             if response.status_code == 200:
                 data = response.json()
                 lat = data['lat']
@@ -43,11 +48,15 @@ class LocationService:
         Mengubah Lat/Lon menjadi Alamat Lengkap (Reverse Geocoding)
         """
         try:
-            # language='id' agar outputnya Bahasa Indonesia
-            location = self.geolocator.reverse((lat, lon), language='id', timeout=5)
+            # ArcGIS tidak butuh parameter language='id', dia otomatis deteksi
+            location = self.geolocator.reverse((lat, lon), timeout=10)
+            
             if location:
                 return location.address
             else:
                 return "Alamat tidak ditemukan"
+                
         except Exception as e:
-            return f"Gagal memuat alamat: {e}"
+            # JIKA MASIH ERROR, KITA KEMBALIKAN KOORDINAT SAJA
+            # Agar aplikasi TIDAK CRASH hanya gara-gara alamat gagal dimuat
+            return f"Koordinat: {lat:.5f}, {lon:.5f}"
