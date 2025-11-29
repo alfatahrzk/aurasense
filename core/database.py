@@ -18,7 +18,7 @@ class VectorDB:
                 url=st.secrets["QDRANT_URL"],
                 api_key=st.secrets["QDRANT_API_KEY"]
             )
-            self.collection_name = "wajah_karyawan"
+            self.collection_name = "absensi"
             self._init_collection()
             
         except Exception as e:
