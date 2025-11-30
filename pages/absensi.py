@@ -57,13 +57,7 @@ else:
         current_address = locator.get_address(user_lat, user_lon)
     
     # Tampilkan di UI
-    st.info(f"📍 Posisi: **{current_address}**")
-
-    # --- MELENGKAPI TAMPILAN METRIC ---
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Latitude", f"{user_lat:.4f}")
-    col2.metric("Longitude", f"{user_lon:.4f}")
-    col3.metric("Sumber", source)
+    st.info(f"📍 Posisi anda di : **{current_address}**")
     
     if is_in_radius:
         st.success(f"✅ Lokasi Valid! Jarak: {distance:.3f} km")

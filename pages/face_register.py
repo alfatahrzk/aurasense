@@ -24,8 +24,7 @@ if not st.session_state['is_admin']:
     st.stop() # Stop eksekusi jika belum login
 
 # --- MAIN APP ---
-st.title("📝 Registrasi Karyawan")
-st.markdown("Sistem ini menggunakan **Hybrid Enrollment** (Normal + Low Light Augmentation).")
+st.title("📝 Registrasi Wajah")
 
 # Load Backend (Cached)
 @st.cache_resource
