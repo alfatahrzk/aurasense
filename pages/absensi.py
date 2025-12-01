@@ -6,7 +6,7 @@ from datetime import datetime
 import pandas as pd
 import time
 
-# --- PERBAIKAN 1: IMPORT YANG BENAR ---
+# --- PERBAIKAN 1: IMPORT YANG BENAR (face_engine) ---
 from core.engines import FaceEngine 
 from core.database import VectorDB
 from core.logger import AttendanceLogger
@@ -35,9 +35,6 @@ office_conf = config_mgr.get_config()
 OFFICE_COORD = (office_conf['office_lat'], office_conf['office_lon'])
 MAX_RADIUS_KM = office_conf['radius_km']
 
-# Tampilkan Info Kantor (Opsional, bisa dihapus kalau mau bersih)
-# st.write(f"🏢 Kantor: {OFFICE_COORD} | Radius: {MAX_RADIUS_KM} km")
-
 st.subheader("📍 Deteksi Lokasi")
 
 with st.spinner("Mencari koordinat Anda..."):
@@ -56,8 +53,15 @@ else:
     with st.spinner("Mendeteksi nama jalan..."):
         current_address = locator.get_address(user_lat, user_lon)
     
-    # Tampilkan di UI
+    # Tampilkan Alamat
     st.info(f"📍 Posisi anda di : **{current_address}**")
+    
+    # --- PERBAIKAN 2: TAMPILKAN ANGKA KOORDINAT ---
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Latitude", f"{user_lat:.4f}")
+    col2.metric("Longitude", f"{user_lon:.4f}")
+    col3.metric("Sumber", source)
+    # ----------------------------------------------
     
     if is_in_radius:
         st.success(f"✅ Lokasi Valid! Jarak: {distance:.3f} km")
@@ -70,7 +74,7 @@ st.divider()
 # 2. PILIH TIPE ABSENSI
 absen_type = st.radio("Jenis Absensi:", ["Masuk", "Keluar"], horizontal=True)
 
-# --- STATE MANAGEMENT (Agar tidak looping) ---
+# --- STATE MANAGEMENT ---
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
 
@@ -104,43 +108,34 @@ else:
     if img_file is not None:
         bytes_data = img_file.getvalue()
         
-        # --- PERBAIKAN 2: DECODE DAN MIRRORING ---
-        # Decode gambar mentah
+        # Decode & Mirroring
         raw_cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), 1)
-        # Balik gambar (Mirroring) agar natural bagi user
-        cv_img = cv2.flip(raw_cv_img, 1)
-        # -----------------------------------------
+        cv_img = cv2.flip(raw_cv_img, 1) # Mirroring Aktif
         
-        # Deteksi Wajah (Gunakan cv_img yang sudah dibalik)
-        gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+        # Gunakan MediaPipe (extract_face_coords)
+        coords = engine.extract_face_coords(cv_img)
         
-        # Akses properti face_cascade dari engine
-        faces = engine.face_cascade.detectMultiScale(gray, 1.1, 4)
-        
-        if len(faces) == 0:
+        if coords is None:
             st.warning("⚠️ Wajah tidak terdeteksi.")
-            # Tampilkan gambar asli agar user tau kenapa gagal
-            st.image(cv_img, channels="BGR", caption="Wajah Gagal Terdeteksi")
+            st.image(cv_img, channels="BGR", caption="Gagal Deteksi")
         else:
-            x, y, w, h = faces[0]
+            x, y, w, h = coords 
             
-            # Gambar Kotak Hijau Visualisasi
+            # Gambar Kotak
             img_with_box = cv_img.copy()
             cv2.rectangle(img_with_box, (x, y), (x+w, y+h), (0, 255, 0), 3)
-            
-            # Tampilkan gambar yang sudah ada kotaknya
             st.image(img_with_box, channels="BGR", caption="Wajah Terdeteksi")
             
-            # Crop wajah untuk dikirim ke AI
+            # Crop Wajah
             face_crop = cv_img[y:y+h, x:x+w]
             
             with st.spinner("Mencocokkan biometrik..."):
                 input_emb = engine.get_embedding(face_crop)
-                found_user, score = db.search_user(input_emb, threshold=0.5)
+                
+                # Threshold 0.7 sudah cukup ketat dan aman
+                found_user, score = db.search_user(input_emb, threshold=0.65)
                 
                 if found_user:
-                    # Simpan Log ke Google Sheets
-                    # Pastikan urutan argumen sesuai dengan logger.py yang terakhir kita buat
                     if logger.log_attendance(found_user, absen_type, distance, current_address):
                         
                         st.session_state['berhasil_absen'] = {
