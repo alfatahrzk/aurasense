@@ -32,7 +32,7 @@ st.markdown("""
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .navbar {
-            background-color: #003366;
+            background-color: #004080; /* Biru sedikit lebih cerah dari header */
             padding: 10px 20px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -48,12 +48,14 @@ st.markdown("""
 # Header Section
 st.markdown('<div class="header"><h1>🏢 AuraSense Presence</h1></div>', unsafe_allow_html=True)
 
-# Navigation links
+# Navigation links dengan background biru (navbar)
+st.markdown('<div class="navbar">', unsafe_allow_html=True)
 nav_col1, nav_col2 = st.columns([1, 1])
 with nav_col1:
     st.page_link("home.py", label="🏠 Home")
 with nav_col2:
     st.page_link("pages/Absensi.py", label="📸 Absen")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Main Content
 with st.container():
