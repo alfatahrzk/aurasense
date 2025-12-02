@@ -133,7 +133,7 @@ else:
                             st.session_state['berhasil_absen'] = {
                                 'nama': found_user,
                                 'skor': f"{score:.4f}",
-                                'waktu': datetime.now().strftime('%H:%M:%S'),
+                                'waktu': (datetime.now() + pd.Timedelta(hours=7)).strftime('%H:%M:%S'), 
                                 'jarak': f"{distance:.3f}",
                                 'alamat': current_address
                             }
@@ -159,6 +159,7 @@ else:
             else:
                 # --- KASUS GAGAL: SPOOFING (LOGGING JALAN) ---
                 st.error(f"🔴 Ditolak! Kualitas foto buruk / Terindikasi Spoofing.")
+                st.info("💡 Pastikan kamera anda bersih dan pencahayaan cukup")
                 
                 # Simpan Log Gagal
                 logger.log_attendance(

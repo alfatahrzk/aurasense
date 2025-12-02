@@ -1,7 +1,6 @@
 import streamlit as st
 from supabase import create_client, Client
-from datetime import datetime
-import pandas as pd
+from datetime import datetime, timedelta, timezone # <--- Import tambahan
 
 class AttendanceLogger:
     def __init__(self):
@@ -13,9 +12,21 @@ class AttendanceLogger:
             st.error(f"Gagal konek Supabase: {e}")
 
     def log_attendance(self, name, status, location_dist, address, lat, lon, similarity, liveness, validation_status="Berhasil"):
-        """Mencatat log ke Supabase"""
+        """
+        Mencatat log ke Supabase dengan Waktu WIB (UTC+7)
+        """
         try:
-            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # --- PERBAIKAN TIMEZONE (WIB) ---
+            # Definisikan Zona Waktu UTC+7
+            WIB = timezone(timedelta(hours=7))
+            
+            # Ambil waktu sekarang dengan zona WIB
+            now_wib = datetime.now(WIB)
+            
+            # Format ke string
+            now_str = now_wib.strftime("%Y-%m-%d %H:%M:%S")
+            # -------------------------------
+            
             data = {
                 "nama": name,
                 "status": status,
@@ -28,19 +39,17 @@ class AttendanceLogger:
                 "skor_liveness": float(liveness),
                 "status_validasi": validation_status 
             }
+            
             self.supabase.table("logs").insert(data).execute()
             return True
+            
         except Exception as e:
             st.error(f"Gagal simpan log: {e}")
             return False
 
-    # --- FITUR BARU: AMBIL LOG UNTUK ADMIN ---
+    # --- FUNGSI GET LOGS (TETAP SAMA) ---
     def get_logs(self, limit=100):
-        """
-        Mengambil 100 log terakhir, diurutkan dari yang terbaru.
-        """
         try:
-            # Select * from logs order by id desc limit 100
             response = self.supabase.table("logs")\
                 .select("*")\
                 .order("id", desc=True)\
@@ -52,8 +61,7 @@ class AttendanceLogger:
             if data:
                 return pd.DataFrame(data)
             else:
-                return pd.DataFrame() # Return DF kosong jika tidak ada data
-                
+                return pd.DataFrame()
         except Exception as e:
             st.error(f"Gagal mengambil log: {e}")
             return pd.DataFrame()
