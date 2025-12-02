@@ -4,7 +4,7 @@ import streamlit as st
 # Set page config with custom theme
 st.set_page_config(
     page_title="AuraSense",
-    layout="centered",
+    layout="wide",
     page_icon="🏢"
 )
 
@@ -36,6 +36,13 @@ st.markdown("""
 
 # Header Section
 st.markdown('<div class="header"><h1>🏢 AuraSense Presence</h1></div>', unsafe_allow_html=True)
+
+# Navigation links
+nav_col1, nav_col2 = st.columns([1, 1])
+with nav_col1:
+    st.page_link("home.py", label="🏠 Home")
+with nav_col2:
+    st.page_link("pages/Absensi.py", label="📸 Absen")
 
 # Main Content
 with st.container():
