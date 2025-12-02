@@ -147,6 +147,20 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+[data-testid="stElementContainer"] {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+[data-testid="stRadio"] {
+    display: flex !important;
+    justify-content: center !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
 
 if 'berhasil_absen' not in st.session_state:
