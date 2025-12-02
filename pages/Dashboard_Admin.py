@@ -89,6 +89,38 @@ st.markdown("""
         .header * {
             color: white !important;
         }
+        /* Fix text on dark backgrounds */
+        .stButton[kind="primary"] > button,
+        .stButton[kind="secondary"] > button,
+        .stButton > button {
+            color: white !important;
+        }
+        /* Fix success/error/info/warning messages */
+        .stSuccess {
+            color: #155724 !important;
+            background-color: #d4edda !important;
+        }
+        .stError {
+            color: #721c24 !important;
+            background-color: #f8d7da !important;
+        }
+        .stWarning {
+            color: #856404 !important;
+            background-color: #fff3cd !important;
+        }
+        .stInfo {
+            color: #0c5460 !important;
+            background-color: #d1ecf1 !important;
+        }
+        /* Fix spinner and other dark background elements */
+        .stSpinner {
+            color: white !important;
+        }
+        /* Fix any elements with dark backgrounds */
+        [data-testid="stStatusWidget"],
+        [data-testid="stToast"] {
+            color: white !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
