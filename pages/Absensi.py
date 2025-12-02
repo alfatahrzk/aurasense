@@ -71,7 +71,6 @@ if 'berhasil_absen' not in st.session_state:
 if st.session_state['berhasil_absen'] is not None:
     user_data = st.session_state['berhasil_absen']
     
-    st.balloons() 
     st.success(f"✅ Absensi Berhasil!")
     
     st.info(f"""
