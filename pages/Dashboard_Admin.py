@@ -12,6 +12,33 @@ from core.admin_auth import AdminAuth # <--- IMPORT BARU
 
 st.set_page_config(page_title="Dashboard Admin", layout="wide") 
 
+# Custom CSS agar selaras dengan home.py dan Absensi.py
+st.markdown("""
+    <style>
+        .main {
+            background-color: #e6f2ff;
+        }
+        .stApp {
+            background-color: #e6f2ff;
+        }
+        .header {
+            background-color: #003366;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .content-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # --- INISIALISASI ---
 @st.cache_resource
 def get_backends():
@@ -51,7 +78,8 @@ with st.sidebar:
         st.session_state['is_admin'] = False
         st.rerun()
 
-st.title("⚙️ Dashboard Admin")
+# Header utama selaras dengan halaman lain
+st.markdown('<div class="header"><h1>⚙️ Dashboard Admin</h1></div>', unsafe_allow_html=True)
 
 # BUAT 5 TAB MENU (TAMBAHAN SATU TAB BARU)
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
