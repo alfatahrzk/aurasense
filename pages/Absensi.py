@@ -72,11 +72,30 @@ st.markdown("""
             background-color: #e6ffe6 !important;
             border-left: 4px solid #006600 !important;
         }
+        /* Target horizontal block untuk navbar */
+        [data-testid="stHorizontalBlock"] {
+            background-color: #004080;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        [data-testid="stHorizontalBlock"] a {
+            color: #ffffff !important;
+            font-weight: 600;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 # Header Section
 st.markdown('<div class="header"><h1 style="color: white; margin: 0;">📸 Absensi Harian</h1></div>', unsafe_allow_html=True)
+
+# Navigation links dengan background biru (navbar)
+nav_col1, nav_col2 = st.columns([1, 1])
+with nav_col1:
+    st.page_link("home.py", label="🏠 Home")
+with nav_col2:
+    st.page_link("pages/Absensi.py", label="📸 Absen")
 
 # --- INISIALISASI BACKEND ---
 @st.cache_resource
@@ -130,26 +149,58 @@ st.markdown("""
 
 st.markdown("""
 <style>
-[data-testid="stVerticalBlock"] > div[style*="display: flex; flex-direction: column; gap: 1rem;"] {
+.absensi-container {
     background-color: #003366;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
-}
-[data-testid="stVerticalBlock"] > div[style*="display: flex; flex-direction: column; gap: 1rem;"] .stRadio > div {
-    justify-content: center;
     display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-[data-testid="stVerticalBlock"] > div[style*="display: flex; flex-direction: column; gap: 1rem;"] .stRadio label {
+.absensi-left, .absensi-right {
+    flex: 1;
+    text-align: center;
+}
+.absensi-left {
+    text-align: center;
+}
+.absensi-right {
+    text-align: center;
+}
+.absensi-container label {
     color: white !important;
+    font-weight: 600;
 }
 </style>
 """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([1.5, 2, 1.5])
-with col2:
-    absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
+st.markdown("""
+<div class="absensi-container">
+    <div class="absensi-left">
+""", unsafe_allow_html=True)
+
+masuk_selected = st.radio("", ["🏠 Masuk"], key="masuk_radio", label_visibility="collapsed")
+
+st.markdown("""
+    </div>
+    <div class="absensi-right">
+""", unsafe_allow_html=True)
+
+keluar_selected = st.radio("", ["🚪 Keluar"], key="keluar_radio", label_visibility="collapsed")
+
+st.markdown("""
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Set absen_type based on selection
+absen_type = None
+if masuk_selected:
+    absen_type = "Masuk"
+elif keluar_selected:
+    absen_type = "Keluar"
 
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
