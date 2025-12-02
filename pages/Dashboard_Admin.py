@@ -32,6 +32,7 @@ st.markdown("""
         }
         .content-box {
             background-color: white;
+            color: #003366;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -52,6 +53,26 @@ st.markdown("""
             background-color: #ffffff !important;
             color: #003366 !important;
             box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+        /* Ensure all text elements have proper contrast */
+        .stAlert,
+        .stMarkdown,
+        .stHeader,
+        .stSubheader,
+        .stTitle,
+        .stText,
+        .stInfo,
+        .stSuccess,
+        .stWarning,
+        .stError {
+            color: #003366 !important;
+        }
+        /* Override any white text inheritance */
+        * {
+            color: inherit !important;
+        }
+        .header * {
+            color: white !important;
         }
     </style>
 """, unsafe_allow_html=True)
