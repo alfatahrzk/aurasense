@@ -45,12 +45,12 @@ st.markdown("""
         }
         /* Style for radio buttons */
         .stRadio > div {
-            background-color: white;
+            background-color: #003366;  /* Warna latar belakang biru tua */
             padding: 10px;
             border-radius: 10px;
         }
         .stRadio > div > label {
-            color: #000000 !important;
+            color: #ffffff !important;  /* Warna teks putih */
             font-weight: 600;
             font-size: 16px;
         }
