@@ -149,25 +149,21 @@ st.markdown("""
 
 st.markdown("""
 <style>
-.absensi-container {
+[data-testid="stElementContainer"] {
     background-color: #003366;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
-.absensi-container label {
+[data-testid="stElementContainer"] label {
     color: white !important;
     font-weight: 600;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="absensi-container">', unsafe_allow_html=True)
-
 absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
