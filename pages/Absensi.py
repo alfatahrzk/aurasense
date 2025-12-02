@@ -155,19 +155,6 @@ st.markdown("""
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.absensi-left, .absensi-right {
-    flex: 1;
-    text-align: center;
-}
-.absensi-left {
-    text-align: center;
-}
-.absensi-right {
-    text-align: center;
 }
 .absensi-container label {
     color: white !important;
@@ -176,31 +163,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<div class="absensi-container">
-    <div class="absensi-left">
-""", unsafe_allow_html=True)
+st.markdown('<div class="absensi-container">', unsafe_allow_html=True)
 
-masuk_selected = st.radio("", ["🏠 Masuk"], key="masuk_radio", label_visibility="collapsed")
+absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
 
-st.markdown("""
-    </div>
-    <div class="absensi-right">
-""", unsafe_allow_html=True)
-
-keluar_selected = st.radio("", ["🚪 Keluar"], key="keluar_radio", label_visibility="collapsed")
-
-st.markdown("""
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Set absen_type based on selection
-absen_type = None
-if masuk_selected:
-    absen_type = "Masuk"
-elif keluar_selected:
-    absen_type = "Keluar"
+st.markdown('</div>', unsafe_allow_html=True)
 
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
