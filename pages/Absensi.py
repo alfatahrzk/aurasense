@@ -51,11 +51,26 @@ st.markdown("""
         }
         .stRadio > div > label {
             color: #000000 !important;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        /* Style for selected radio button */
+        .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div {
+            background-color: #003366 !important;
+            border-color: #003366 !important;
         }
         /* Style for success message */
         .stAlert {
             border-radius: 10px;
+        }
+        /* Style for success message (location valid) */
+        .stAlert [data-testid='stMarkdownContainer'] p {
+            color: #004d00 !important;
+            font-weight: 500;
+        }
+        .stAlert [data-testid='stNotification'] {
+            background-color: #e6ffe6 !important;
+            border-left: 4px solid #006600 !important;
         }
     </style>
 """, unsafe_allow_html=True)
