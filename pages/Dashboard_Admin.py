@@ -20,6 +20,7 @@ st.markdown("""
         }
         .stApp {
             background-color: #e6f2ff;
+            color: #003366;
         }
         .header {
             background-color: #003366;
