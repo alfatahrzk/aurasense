@@ -37,6 +37,22 @@ st.markdown("""
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
+        /* Tab styling agar teks tidak menyatu dengan background */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 4px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: #ffffff;
+            color: #003366;
+            border-radius: 8px 8px 0 0;
+            padding: 8px 16px;
+            font-weight: 600;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #ffffff !important;
+            color: #003366 !important;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 """, unsafe_allow_html=True)
 
