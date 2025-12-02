@@ -25,7 +25,7 @@ if not st.session_state['is_admin']:
         st.title("🔒 Admin Login")
         pwd = st.text_input("Masukkan Password Admin", type="password")
         if st.button("Login", use_container_width=True):
-            correct_pwd = st.secrets.get("ADMIN_PASSWORD", "admin123")
+            correct_pwd = st.secrets.get("ADMIN_PASSWORD", "kopihitamnyamandilambung")
             if pwd == correct_pwd: 
                 st.session_state['is_admin'] = True
                 st.rerun()
