@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone # <--- Import tambahan
+import pandas as pd
 
 class AttendanceLogger:
     def __init__(self):

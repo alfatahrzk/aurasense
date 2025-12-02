@@ -1,8 +1,9 @@
 import streamlit as st
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct
+# Tambahkan PayloadSchemaType di import
+from qdrant_client.models import VectorParams, Distance, PointStruct, PayloadSchemaType
 import uuid
-import requests # <--- Kita butuh ini untuk menembak API langsung
+import requests 
 import json
 
 class VectorDB:
@@ -10,19 +11,17 @@ class VectorDB:
         self.client = None
         self.api_key = None
         self.url = None
+        self.collection_name = "absensi" 
         
         try:
-            # Ambil Credentials
             if "QDRANT_URL" in st.secrets:
-                self.url = st.secrets["QDRANT_URL"]
+                self.url = st.secrets["QDRANT_URL"].strip().rstrip("/")
                 self.api_key = st.secrets["QDRANT_API_KEY"]
             else:
                 st.error("Secrets QDRANT belum disetting!")
                 return
 
-            # Tetap init client untuk fungsi save/create collection (karena biasanya yang error cuma search)
             self.client = QdrantClient(url=self.url, api_key=self.api_key)
-            self.collection_name = "absensi"
             self._init_collection()
             
         except Exception as e:
@@ -30,6 +29,7 @@ class VectorDB:
 
     def _init_collection(self):
         if self.client:
+            # 1. Buat Collection (Jika belum ada)
             try:
                 self.client.get_collection(self.collection_name)
             except:
@@ -37,10 +37,23 @@ class VectorDB:
                     collection_name=self.collection_name,
                     vectors_config=VectorParams(size=512, distance=Distance.COSINE)
                 )
+            
+            # --- PERBAIKAN: BUAT INDEX UNTUK USERNAME ---
+            # Ini solusi agar tidak error "Index required" saat delete
+            try:
+                self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name="username",
+                    field_schema=PayloadSchemaType.KEYWORD
+                )
+                # print("Index username berhasil dibuat/sudah ada.")
+            except Exception as e:
+                # Biasanya error kalau index sudah ada, jadi kita pass saja
+                pass
+            # --------------------------------------------
 
     def save_user(self, username, embedding):
         if not self.client: return False
-        
         point_id = str(uuid.uuid4())
         try:
             self.client.upsert(
@@ -59,25 +72,10 @@ class VectorDB:
             return False
 
     def search_user(self, embedding, threshold=0.5):
-        """
-        Mencari user menggunakan REST API Langsung (Bypass Library Error)
-        """
         if not self.url: return None, 0.0
 
-        # --- JURUS PAMUNGKAS: PAKE HTTP REQUEST ---
-        # Kita tidak pakai self.client.search() karena error di cloud
-        # Kita tembak langsung URL API Qdrant
-        
-        # Bersihkan URL (hapus port :6333 jika ada, karena requests biasanya auto handle atau butuh format bersih)
-        # Tapi biasanya format cloud qdrant: https://xyz...:6333
-        
-        # Endpoint Search Qdrant
         api_endpoint = f"{self.url}/collections/{self.collection_name}/points/search"
-        
-        headers = {
-            "api-key": self.api_key,
-            "Content-Type": "application/json"
-        }
+        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
         
         payload = {
             "vector": embedding.tolist(),
@@ -87,26 +85,69 @@ class VectorDB:
         }
 
         try:
-            # Kirim Request HTTP POST
             response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=5)
-            
             if response.status_code == 200:
                 result_json = response.json()
-                # Parsing hasil JSON dari Qdrant
-                # Struktur: {'result': [{'id': '...', 'score': 0.8, 'payload': {'username': '...'}}], ...}
                 points = result_json.get('result', [])
-                
                 if points:
                     best_match = points[0]
-                    username = best_match['payload']['username']
-                    score = best_match['score']
-                    return username, score
-            else:
-                # Jika gagal, coba print errornya di log (bukan di layar user biar ga panik)
-                print(f"API Error: {response.text}")
-                
+                    return best_match['payload']['username'], best_match['score']
+            return None, 0.0
+        except Exception as e:
+            st.error(f"Error Search API: {e}")
             return None, 0.0
 
+    def get_all_users(self):
+        if not self.url: return []
+        
+        api_endpoint = f"{self.url}/collections/{self.collection_name}/points/scroll"
+        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
+        
+        payload = {
+            "limit": 1000,
+            "with_payload": True,
+            "with_vector": False
+        }
+        
+        try:
+            response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=10)
+            if response.status_code == 200:
+                points = response.json().get('result', {}).get('points', [])
+                users = [p['payload']['username'] for p in points if 'payload' in p and 'username' in p['payload']]
+                return sorted(list(set(users)))
+            else:
+                return []
         except Exception as e:
-            st.error(f"Error Search via API: {e}")
-            return None, 0.0
+            st.error(f"Error Get Users: {e}")
+            return []
+
+    def delete_user(self, username):
+        if not self.url: return False
+        
+        api_endpoint = f"{self.url}/collections/{self.collection_name}/points/delete"
+        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
+        
+        payload = {
+            "filter": {
+                "must": [
+                    {
+                        "key": "username",
+                        "match": {"value": username}
+                    }
+                ]
+            }
+        }
+        
+        try:
+            response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=10)
+            
+            if response.status_code == 200:
+                return True
+            else:
+                # Jika masih error, kita tampilkan detailnya
+                st.error(f"🔥 Gagal Delete (Status {response.status_code}): {response.text}")
+                return False
+                
+        except Exception as e:
+            st.error(f"❌ Error Koneksi Delete: {e}")
+            return False
