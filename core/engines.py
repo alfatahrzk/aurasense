@@ -56,39 +56,26 @@ class FaceEngine:
 
     def extract_face_coords(self, image_cv2):
         if image_cv2 is None: return None
-        
-        # --- OPTIMASI SPEED: RESIZE DULU ---
-        # Kita kecilkan gambar 50% untuk deteksi (biar ngebut)
-        # Tapi nanti koordinatnya kita kembalikan ke skala asli
-        scale_factor = 0.5
-        small_img = cv2.resize(image_cv2, (0, 0), fx=scale_factor, fy=scale_factor)
-        
-        height, width, _ = small_img.shape # Pakai dimensi gambar kecil
-        img_rgb = cv2.cvtColor(small_img, cv2.COLOR_BGR2RGB) # Convert yang kecil
+        height, width, _ = image_cv2.shape
+        img_rgb = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2RGB)
         img_pil = Image.fromarray(img_rgb)
         
         try:
             boxes, probs = self.detector.detect(img_pil)
-            
-            if boxes is None or len(boxes) == 0:
-                return None
+            if boxes is None or len(boxes) == 0: return None
             
             best_idx = np.argmax(probs)
             box = boxes[best_idx]
             x1, y1, x2, y2 = [int(b) for b in box]
             
-            # --- KEMBALIKAN SKALA KOORDINAT (UPSCALING) ---
-            # Karena deteksinya di gambar 0.5x, koordinatnya harus dikali 2
-            real_x = int(max(0, x1) / scale_factor)
-            real_y = int(max(0, y1) / scale_factor)
-            real_w = int(min(width - max(0, x1), x2 - x1) / scale_factor)
-            real_h = int(min(height - max(0, y1), y2 - y1) / scale_factor)
+            # Padding 0 (Ngepas Wajah) biar background tidak mengganggu analisis tekstur
+            x = max(0, x1)
+            y = max(0, y1)
+            w = min(width - x, x2 - x1)
+            h = min(height - y, y2 - y1)
             
-            # Validasi ukuran (di gambar asli)
-            if real_w < 40 or real_h < 40: return None
-                
-            return (real_x, real_y, real_w, real_h)
-            
+            if w < 20 or h < 20: return None
+            return (x, y, w, h)
         except Exception:
             return None
 
@@ -109,20 +96,48 @@ class FaceEngine:
 
     # --- ANTI SPOOFING (TEXTURE ANALYSIS) ---
     def check_liveness(self, face_crop):
-        if face_crop is None or face_crop.size == 0: return False, 0.0
+        """
+        Menggabungkan 2 metode:
+        1. Laplacian Variance (Ketajaman Tekstur)
+        2. Fourier Transform (Deteksi Pola Layar/Digital)
+        """
+        if face_crop is None or face_crop.size == 0:
+            return False, 0.0
             
-        # 1. Laplacian (Tekstur)
+        # 1. Analisis Tekstur (Laplacian)
         gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
-        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+        laplacian_score = cv2.Laplacian(gray, cv2.CV_64F).var()
         
-        # 2. Fourier Transform (Deteksi Pola Layar) - OPTIONAL TAMBAHAN
-        # Ini mendeteksi frekuensi tinggi yang tidak wajar (moiré pattern)
+        # 2. Analisis Frekuensi (Fourier Transform)
+        # Mendeteksi Moiré Pattern (Garis-garis halus layar HP)
+        # Jika foto asli, frekuensi tinggi biasanya acak (random).
+        # Jika foto layar, ada pola frekuensi tertentu.
+        
         f = np.fft.fft2(gray)
         fshift = np.fft.fftshift(f)
-        magnitude_spectrum = 20 * np.log(np.abs(fshift))
-        mean_freq = np.mean(magnitude_spectrum)
+        magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1e-5) # +1e-5 biar ga log(0)
         
-        final_score = laplacian_var
-        is_real = final_score > 60.0
+        # Hitung rata-rata magnitude frekuensi tinggi
+        # (Indikator sederhana: Wajah asli punya spektrum lebih "lembut")
+        fourier_score = np.mean(magnitude_spectrum)
+        
+        # --- FORMULA GABUNGAN (RAHASIA DAPUR) ---
+        # Kita bobotkan skornya.
+        # Laplacian tinggi = Bagus (Tajam)
+        # Fourier tinggi = Buruk (Banyak noise digital)
+        
+        # Trik: Kita jadikan satu skor final
+        # Wajah asli biasanya Laplacian > 50 dan Fourier < 150
+        
+        # Kita pakai Laplacian sebagai skor utama karena paling stabil untuk demo
+        # Tapi kita kurangi nilainya jika Fouriernya mencurigakan
+        
+        final_score = laplacian_score
+        
+        # Jika terdeteksi pola digital kuat (Fourier tinggi), kita pangkas skornya
+        if fourier_score > 160: 
+            final_score = final_score * 0.5 # Penalty 50%
+            
+        is_real = final_score > 60.0 # Ambang batas default (bisa diatur admin)
         
         return is_real, final_score
