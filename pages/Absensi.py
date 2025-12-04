@@ -36,41 +36,20 @@ st.markdown("""
             margin-bottom: 20px;
             text-align: center;
         }
-        .content-box {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
         /* Style for radio buttons */
         .stRadio > div {
-            background-color: #003366;  /* Warna latar belakang biru tua */
+            background-color: #003366;
             padding: 10px;
             border-radius: 10px;
         }
         .stRadio > div > label {
-            color: #ffffff !important;  /* Warna teks putih */
+            color: #ffffff !important;
             font-weight: 600;
             font-size: 16px;
         }
-        /* Style for selected radio button */
         .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div {
             background-color: #003366 !important;
             border-color: #003366 !important;
-        }
-        /* Style for success message */
-        .stAlert {
-            border-radius: 10px;
-        }
-        /* Style for success message (location valid) */
-        .stAlert [data-testid='stMarkdownContainer'] p {
-            color: #004d00 !important;
-            font-weight: 500;
-        }
-        .stAlert [data-testid='stNotification'] {
-            background-color: #e6ffe6 !important;
-            border-left: 4px solid #006600 !important;
         }
         /* Target horizontal block untuk navbar */
         [data-testid="stHorizontalBlock"] {
@@ -90,7 +69,7 @@ st.markdown("""
 # Header Section
 st.markdown('<div class="header"><h1 style="color: white; margin: 0;">📸 Absensi Harian</h1></div>', unsafe_allow_html=True)
 
-# Navigation links dengan background biru (navbar)
+# Navigation links
 nav_col1, nav_col2 = st.columns([1, 1])
 with nav_col1:
     st.page_link("home.py", label="🏠 Home")
@@ -118,13 +97,10 @@ def check_location(user_lat, user_lon, office_lat, office_lon, radius_km):
     distance = haversine((user_lat, user_lon), (office_lat, office_lon), unit=Unit.KILOMETERS)
     return distance, distance <= radius_km
 
-# --- HALAMAN UTAMA ---
-# Title is now in the header
-
+# --- PROSES LOKASI ---
 with st.spinner("Mencari lokasi Anda..."):
     user_lat, user_lon, source = locator.get_coordinates()
 
-# VALIDASI LOKASI
 if user_lat is None:
     st.warning("⚠️ Sedang meminta izin lokasi browser...")
     st.stop()
@@ -158,23 +134,34 @@ if st.session_state['berhasil_absen'] is not None:
     user_data = st.session_state['berhasil_absen']
     
     with st.container():
-        # Ekstrak nilai dari user_data terlebih dahulu
+        st.markdown(f"""
+        <div style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid #28a745; margin-bottom: 20px;'>
+            <h3 style='color: #28a745; text-align: center; margin-top: 0;'>✅ Absensi Berhasil!</h3>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # --- FITUR BARU: TAMPILKAN FOTO HASIL DETEKSI ---
+        if 'foto_bukti' in user_data:
+            # Tampilkan foto di tengah
+            col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
+            with col_img2:
+                st.image(user_data['foto_bukti'], channels="BGR", caption="Visualisasi AI", use_container_width=True)
+        # ------------------------------------------------
+
+        # Ekstrak data
         nama = user_data.get('nama', '-')
         waktu = user_data.get('waktu', '-')
         alamat = user_data.get('alamat', '-')
         
         st.markdown(f"""
-        <div style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid #28a745;'>
-            <h3 style='color: #28a745; text-align: center; margin-top: 0;'>✅ Absensi Berhasil!</h3>
-            <div style='background-color: white; padding: 15px; border-radius: 8px;'>
-                <h4 style='color: #003366; text-align: center; margin-top: 0;'>STRUK BUKTI KEHADIRAN</h4>
-                <hr style='border: 1px solid #003366; opacity: 0.3;'>
-                <p style='color: #003366;'><strong>Nama</strong>   : {nama}</p>
-                <p style='color: #003366;'><strong>Waktu</strong>  : {waktu}</p>
-                <p style='color: #003366;'><strong>Lokasi</strong> : {alamat}</p>
-                <hr style='border: 1px solid #003366; opacity: 0.3;'>
-                <p style='color: #003366; text-align: center; margin-bottom: 0;'>Data tersimpan di Cloud.</p>
-            </div>
+        <div style='background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+            <h4 style='color: #003366; text-align: center; margin-top: 0;'>STRUK BUKTI KEHADIRAN</h4>
+            <hr style='border: 1px solid #003366; opacity: 0.3;'>
+            <p style='color: #003366;'><strong>Nama</strong>   : {nama}</p>
+            <p style='color: #003366;'><strong>Waktu</strong>  : {waktu}</p>
+            <p style='color: #003366;'><strong>Lokasi</strong> : {alamat}</p>
+            <hr style='border: 1px solid #003366; opacity: 0.3;'>
+            <p style='color: #003366; text-align: center; margin-bottom: 0;'>Data tersimpan di Cloud.</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -203,7 +190,7 @@ else:
             face_crop = cv_img[y:y+h, x:x+w]
 
             # --- CEK LIVENESS ---
-            _, liveness_score = engine.check_liveness(face_crop)
+            _, liveness_score = engine.check_liveness(face_crop, cv_img)
             is_real = liveness_score > LIVENESS_VAL
             
             if is_real:
@@ -213,6 +200,25 @@ else:
                                         
                     # --- CEK THRESHOLD WAJAH ---
                     if found_user and score >= THRESHOLD_VAL:
+                        
+                        # --- FITUR BARU: GAMBAR KOTAK & LABEL NAMA PADA HASIL ---
+                        img_result = cv_img.copy()
+                        
+                        # 1. Gambar Kotak Hijau
+                        cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
+                        
+                        # 2. Siapkan Label
+                        label_text = f"{found_user} ({score:.2f})"
+                        
+                        # 3. Background Label (Biru Tua sesuai tema)
+                        (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+                        cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
+                        
+                        # 4. Tulis Nama (Putih)
+                        cv2.putText(img_result, label_text, (x, y - 10), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                        # -------------------------------------------------------
+
                         # --- KASUS SUKSES ---
                         sukses = logger.log_attendance(
                             name=found_user, 
@@ -232,18 +238,17 @@ else:
                                 'skor': f"{score:.4f}",
                                 'waktu': (datetime.now() + pd.Timedelta(hours=7)).strftime('%H:%M:%S'), 
                                 'jarak': f"{distance:.3f}",
-                                'alamat': current_address
+                                'alamat': current_address,
+                                'foto_bukti': img_result # <--- SIMPAN GAMBAR HASIL
                             }
                             st.rerun()
                         else:
                             st.error("Gagal terhubung ke Database Log.")
                     else:
-                        # --- KASUS GAGAL: SKOR RENDAH (TAPI LOGGING JALAN) ---
+                        # --- KASUS GAGAL: SKOR RENDAH ---
                         st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
-                        
-                        # Simpan Log Gagal
                         logger.log_attendance(
-                            name=f"{found_user} (Ditolak)", # Catat siapa yang paling mirip
+                            name=f"{found_user} (Ditolak)",
                             status="Gagal",
                             location_dist=distance,
                             address=current_address,
@@ -254,11 +259,9 @@ else:
                             validation_status="Gagal: Skor Rendah"
                         )
             else:
-                # --- KASUS GAGAL: SPOOFING (LOGGING JALAN) ---
+                # --- KASUS GAGAL: SPOOFING ---
                 st.error(f"🔴 Ditolak! Kualitas foto buruk / Terindikasi Spoofing.")
                 st.info("💡 Pastikan kamera anda bersih dan pencahayaan cukup")
-                
-                # Simpan Log Gagal
                 logger.log_attendance(
                     name="Unknown (Spoof)",
                     status="Gagal",
