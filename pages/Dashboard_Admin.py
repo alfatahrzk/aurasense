@@ -64,7 +64,7 @@ st.markdown("""
         }
         .stTextInput > div > div > input,
         .stTextInput > div > label {
-            color: #003366 !important;
+            color: white !important;
         }
         .stButton>button, 
         .stDownloadButton>button,
