@@ -19,50 +19,17 @@ st.set_page_config(
     page_icon="📸"
 )
 
-# Custom CSS for styling
+# Custom CSS (SAMA SEPERTI SEBELUMNYA)
 st.markdown("""
     <style>
-        .main {
-            background-color: #e6f2ff;
-        }
-        .stApp {
-            background-color: #e6f2ff;
-        }
-        .header {
-            background-color: #003366;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        /* Style for radio buttons */
-        .stRadio > div {
-            background-color: #003366;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .stRadio > div > label {
-            color: #ffffff !important;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div {
-            background-color: #003366 !important;
-            border-color: #003366 !important;
-        }
-        /* Target horizontal block untuk navbar */
-        [data-testid="stHorizontalBlock"] {
-            background-color: #004080;
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        [data-testid="stHorizontalBlock"] a {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
+        .main { background-color: #e6f2ff; }
+        .stApp { background-color: #e6f2ff; }
+        .header { background-color: #003366; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .stRadio > div { background-color: #003366; padding: 10px; border-radius: 10px; }
+        .stRadio > div > label { color: #ffffff !important; font-weight: 600; font-size: 16px; }
+        .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div { background-color: #003366 !important; border-color: #003366 !important; }
+        [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -87,10 +54,7 @@ engine, db, logger, locator, config_mgr = get_backends()
 office_conf = config_mgr.get_config()
 OFFICE_COORD = (float(office_conf.get('office_lat', -7.25)), float(office_conf.get('office_lon', 112.75)))
 MAX_RADIUS_KM = float(office_conf.get('radius_km', 0.5))
-
-# Settingan AI
 THRESHOLD_VAL = float(office_conf.get('face_threshold', 0.70))
-LIVENESS_VAL = float(office_conf.get('liveness_threshold', 60.0))
 
 # --- FUNGSI LOKASI ---
 def check_location(user_lat, user_lon, office_lat, office_lon, radius_km):
@@ -140,15 +104,13 @@ if st.session_state['berhasil_absen'] is not None:
         </div>
         """, unsafe_allow_html=True)
 
-        # --- FITUR BARU: TAMPILKAN FOTO HASIL DETEKSI ---
+        # Foto Bukti
         if 'foto_bukti' in user_data:
-            # Tampilkan foto di tengah
             col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
             with col_img2:
                 st.image(user_data['foto_bukti'], channels="BGR", caption="Visualisasi AI", use_container_width=True)
-        # ------------------------------------------------
 
-        # Ekstrak data
+        # Struk
         nama = user_data.get('nama', '-')
         waktu = user_data.get('waktu', '-')
         alamat = user_data.get('alamat', '-')
@@ -189,87 +151,61 @@ else:
             x, y, w, h = coords 
             face_crop = cv_img[y:y+h, x:x+w]
 
-            # --- CEK LIVENESS ---
-            _, liveness_score = engine.check_liveness(face_crop)
-            is_real = liveness_score > LIVENESS_VAL
+            # --- LIVENESS DIHAPUS ---
+            # Langsung Verifikasi Wajah Saja
             
-            if is_real:
-                with st.spinner("Mencocokkan biometrik..."):
-                    input_emb = engine.get_embedding(face_crop)
-                    found_user, score = db.search_user(input_emb, threshold=0.0)
-                                        
-                    # --- CEK THRESHOLD WAJAH ---
-                    if found_user and score >= THRESHOLD_VAL:
-                        
-                        # --- FITUR BARU: GAMBAR KOTAK & LABEL NAMA PADA HASIL ---
-                        img_result = cv_img.copy()
-                        
-                        # 1. Gambar Kotak Hijau
-                        cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
-                        
-                        # 2. Siapkan Label
-                        label_text = f"{found_user} ({score:.2f})"
-                        
-                        # 3. Background Label (Biru Tua sesuai tema)
-                        (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
-                        cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
-                        
-                        # 4. Tulis Nama (Putih)
-                        cv2.putText(img_result, label_text, (x, y - 10), 
-                                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-                        # -------------------------------------------------------
+            with st.spinner("Mencocokkan biometrik..."):
+                input_emb = engine.get_embedding(face_crop)
+                found_user, score = db.search_user(input_emb, threshold=0.0)
+                                    
+                # --- CEK THRESHOLD WAJAH ---
+                if found_user and score >= THRESHOLD_VAL:
+                    
+                    # Gambar Kotak & Nama
+                    img_result = cv_img.copy()
+                    cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
+                    label_text = f"{found_user} ({score:.2f})"
+                    (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+                    cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
+                    cv2.putText(img_result, label_text, (x, y - 10), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                        # --- KASUS SUKSES ---
-                        sukses = logger.log_attendance(
-                            name=found_user, 
-                            status=absen_type, 
-                            location_dist=distance, 
-                            address=current_address,
-                            lat=user_lat,
-                            lon=user_lon,
-                            similarity=score,
-                            liveness=liveness_score,
-                            validation_status="Berhasil"
-                        )
-                        
-                        if sukses:
-                            st.session_state['berhasil_absen'] = {
-                                'nama': found_user,
-                                'skor': f"{score:.4f}",
-                                'waktu': (datetime.now() + pd.Timedelta(hours=7)).strftime('%H:%M:%S'), 
-                                'jarak': f"{distance:.3f}",
-                                'alamat': current_address,
-                                'foto_bukti': img_result # <--- SIMPAN GAMBAR HASIL
-                            }
-                            st.rerun()
-                        else:
-                            st.error("Gagal terhubung ke Database Log.")
+                    # Simpan Log (Liveness score dikirim 0 atau 100 dummy)
+                    sukses = logger.log_attendance(
+                        name=found_user, 
+                        status=absen_type, 
+                        location_dist=distance, 
+                        address=current_address,
+                        lat=user_lat,
+                        lon=user_lon,
+                        similarity=score,
+                        liveness=100.0, # Dummy Score
+                        validation_status="Berhasil"
+                    )
+                    
+                    if sukses:
+                        st.session_state['berhasil_absen'] = {
+                            'nama': found_user,
+                            'skor': f"{score:.4f}",
+                            'waktu': (datetime.now() + pd.Timedelta(hours=7)).strftime('%H:%M:%S'), 
+                            'jarak': f"{distance:.3f}",
+                            'alamat': current_address,
+                            'foto_bukti': img_result
+                        }
+                        st.rerun()
                     else:
-                        # --- KASUS GAGAL: SKOR RENDAH ---
-                        st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
-                        logger.log_attendance(
-                            name=f"{found_user} (Ditolak)",
-                            status="Gagal",
-                            location_dist=distance,
-                            address=current_address,
-                            lat=user_lat,
-                            lon=user_lon,
-                            similarity=score,
-                            liveness=liveness_score,
-                            validation_status="Gagal: Skor Rendah"
-                        )
-            else:
-                # --- KASUS GAGAL: SPOOFING ---
-                st.error(f"🔴 Ditolak! Kualitas foto buruk / Terindikasi Spoofing.")
-                st.info("💡 Pastikan kamera anda bersih dan pencahayaan cukup")
-                logger.log_attendance(
-                    name="Unknown (Spoof)",
-                    status="Gagal",
-                    location_dist=distance,
-                    address=current_address,
-                    lat=user_lat,
-                    lon=user_lon,
-                    similarity=0.0,
-                    liveness=liveness_score,
-                    validation_status="Gagal: Liveness Check"
-                )
+                        st.error("Gagal terhubung ke Database Log.")
+                else:
+                    # Gagal: Skor Rendah
+                    st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
+                    logger.log_attendance(
+                        name=f"{found_user} (Ditolak)",
+                        status="Gagal",
+                        location_dist=distance,
+                        address=current_address,
+                        lat=user_lat,
+                        lon=user_lon,
+                        similarity=score,
+                        liveness=0.0, # Dummy Score
+                        validation_status="Gagal: Skor Rendah"
+                    )
