@@ -75,7 +75,7 @@ st.markdown("""
             background-color: #002244 !important;
             border-color: #001122 !important;
         }
-        div[data-testid="stForm"][data-testid*="add_admin_form"] {
+        .st-emotion-cache-zuyloh.emjbblw1[data-testid="stForm"] {
             padding: 0 !important;
         }
     </style>
