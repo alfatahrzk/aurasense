@@ -53,6 +53,19 @@ st.markdown("""
             color: #003366 !important;
             box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
         }
+        /* Make specific headers and labels dark blue */
+        .stHeader {
+            color: #003366 !important;
+        }
+        /* Custom class for dark blue text */
+        .dark-blue-text {
+            color: #003366 !important;
+            font-weight: 600;
+        }
+        .stTextInput > div > div > input,
+        .stTextInput > div > label {
+            color: #003366 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -191,10 +204,13 @@ with tab2:
     with st.form("edit_config"):
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("📍 Lokasi Kantor")
-            lat = st.number_input("Latitude", value=float(current_conf.get('office_lat', -7.25)), format="%.6f")
-            lon = st.number_input("Longitude", value=float(current_conf.get('office_lon', 112.75)), format="%.6f")
-            rad = st.number_input("Radius (km)", value=float(current_conf.get('radius_km', 0.5)), step=0.1)
+            st.markdown('<p class="dark-blue-text">📍 Lokasi Kantor</p>', unsafe_allow_html=True)
+            st.markdown('<p class="dark-blue-text">Latitude</p>', unsafe_allow_html=True)
+            lat = st.number_input("", value=float(current_conf.get('office_lat', -7.25)), format="%.6f", label_visibility="collapsed")
+            st.markdown('<p class="dark-blue-text">Longitude</p>', unsafe_allow_html=True)
+            lon = st.number_input("", value=float(current_conf.get('office_lon', 112.75)), format="%.6f", label_visibility="collapsed")
+            st.markdown('<p class="dark-blue-text">Radius (km)</p>', unsafe_allow_html=True)
+            rad = st.number_input("", value=float(current_conf.get('radius_km', 0.5)), step=0.1, label_visibility="collapsed")
         with col2:
             st.subheader("🧠 Sensitivitas AI")
             face_thresh = st.slider("Threshold Wajah", 0.0, 1.0, float(current_conf.get('face_threshold', 0.70)), 0.01)
