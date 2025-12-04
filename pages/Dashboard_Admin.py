@@ -75,6 +75,9 @@ st.markdown("""
             background-color: #002244 !important;
             border-color: #001122 !important;
         }
+        div[data-testid="stForm"][data-testid*="add_admin_form"] {
+            padding: 0 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
