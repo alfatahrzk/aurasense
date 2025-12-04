@@ -102,6 +102,7 @@ class FaceEngine:
         return mean_emb / np.linalg.norm(mean_emb)
 
     # --- FITUR BARU: ANTI SPOOFING V4 (MULTI-LAYER CHECK) ---
+    # --- FITUR ANTI SPOOFING V6 (TUNED BY DATA) ---
     def check_liveness(self, face_crop):
         if face_crop is None or face_crop.size == 0: return False, 0.0
             
@@ -109,48 +110,47 @@ class FaceEngine:
         gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
         laplacian_score = cv2.Laplacian(gray, cv2.CV_64F).var()
         
-        # 2. Analisis Warna Kulit (YCrCb)
-        # Mengubah ke ruang warna YCrCb untuk memisahkan Luma (Y) dan Chroma (Cr, Cb)
+        # 2. Analisis Warna (YCrCb) - Tetap kita pakai
         ycrcb = cv2.cvtColor(face_crop, cv2.COLOR_BGR2YCrCb)
         y, cr, cb = cv2.split(ycrcb)
-        
-        # Rata-rata nilai warna
         mean_cr = np.mean(cr)
         mean_cb = np.mean(cb)
         
-        # Rentang Warna Kulit Normal (Empiris)
-        # Cr biasanya 133-173, Cb biasanya 77-127 untuk kulit manusia asli
         skin_score = 100
+        # Rentang kulit umum
         if not (133 <= mean_cr <= 173) or not (77 <= mean_cb <= 127):
-            # Jika warna kulit aneh (terlalu biru layar atau terlalu pucat)
             skin_score = 0 
         
-        # 3. Analisis Frekuensi (Fourier)
+        # 3. Analisis Frekuensi (Fourier) - Tetap kita pakai
         f = np.fft.fft2(gray)
         fshift = np.fft.fftshift(f)
         magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1e-5)
         fourier_score = np.mean(magnitude_spectrum)
         
-        # --- PERHITUNGAN SKOR AKHIR ---
+        # --- LOGIKA SCORING BARU (BERDASARKAN LOGS) ---
         final_score = laplacian_score
         
-        # PENALTI 1: TERLALU TAJAM (Ciri Layar HD)
-        # Kulit asli itu soft. Kalau skor > 800, itu mencurigakan (digital sharpening).
-        if laplacian_score > 300:
-            final_score = final_score * 0.5 # Pangkas skor 50%
+        # PENALTI 1: TERLALU TAJAM (LAYAR LAPTOP)
+        # Berdasarkan log: Wajah asli ~60-120. Layar laptop > 150.
+        # Kita set batas aman di 160.
+        if laplacian_score > 160: 
+            # Semakin tinggi di atas 160, semakin besar diskonnya
+            # Contoh: Skor 300 -> Diskon 70% -> Jadi 90
+            final_score *= 0.4 
             
         # PENALTI 2: MOIRE PATTERN (Grid Layar)
-        if fourier_score > 150:
-            final_score -= 40
+        if fourier_score > 150: 
+            final_score -= 40 
             
-        # PENALTI 3: WARNA KULIT PALSU
-        if skin_score == 0:
-            final_score -= 50 # Hukuman berat jika warna kulit salah
+        # PENALTI 3: WARNA ANEH
+        if skin_score == 0: 
+            final_score -= 50 
             
-        # Normalisasi agar tidak negatif
-        final_score = max(0.0, final_score)
+        # --- NORMALISASI KE 0-100 ---
+        final_score = max(0.0, min(100.0, final_score))
         
         # Ambang batas kelulusan
-        is_real = final_score > 50
+        # Kita naikkan sedikit threshold default-nya agar lebih aman
+        is_real = final_score > 55.0 
         
         return is_real, final_score
