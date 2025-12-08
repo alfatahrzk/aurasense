@@ -32,6 +32,7 @@ st.markdown("""
         .stRadio > div[data-baseweb='radio'] > div > div > label > span { color: #ffffff !important; }
         .stRadio > div[data-baseweb='radio'] > div > div > span { color: #ffffff !important; }
         .stRadio [data-testid="stMarkdownContainer"] span { color: #ffffff !important; }
+        .stRadio div { color: #ffffff !important; }
         [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
         .navbar {
