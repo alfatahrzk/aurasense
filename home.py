@@ -11,6 +11,11 @@ st.set_page_config(
 # Custom CSS for styling
 st.markdown("""
     <style>
+        *, 
+        *::before, 
+        *::after {
+            box-sizing: border-box;
+        }
         .main {
             background-color: #e6f2ff;
         }
