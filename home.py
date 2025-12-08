@@ -54,7 +54,7 @@ st.markdown("""
             color: #ffffff !important;
             font-weight: 600;
         }
-        .stPageLink {
+        .st-emotion-cache-pkbazv {
             color: #ffffff !important;
         }
         /* Additional styling for page links */
