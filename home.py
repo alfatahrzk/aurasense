@@ -54,6 +54,9 @@ st.markdown("""
             color: #ffffff !important;
             font-weight: 600;
         }
+        .stPageLink {
+            color: #ffffff !important;
+        }
         /* Additional styling for page links */
         .stPageLink a {
             color: #ffffff !important;
@@ -64,10 +67,6 @@ st.markdown("""
         [data-testid="stHorizontalBlock"] a,
         .stPageLink a,
         .stPageLink {
-            color: #ffffff !important;
-        }
-        /* Force white color for navigation links only */
-        [data-testid="stHorizontalBlock"] .stPageLink {
             color: #ffffff !important;
         }
     </style>
