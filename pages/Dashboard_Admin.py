@@ -25,7 +25,7 @@ st.markdown("""
         .stTabs [data-baseweb="tab"] { background-color: #ffffff; color: #003366; border-radius: 8px 8px 0 0; padding: 8px 16px; font-weight: 600; }
         .stTabs [aria-selected="true"] { background-color: #ffffff !important; color: #003366 !important; box-shadow: 0 -2px 4px rgba(0,0,0,0.1); }
         .dark-blue-text { color: #003366 !important; font-weight: 600; margin-bottom: 0.5rem; }
-        .stButton>button, .stDownloadButton>button, .stFormSubmitButton>button, button[data-testid="stBaseButton-secondaryFormSubmit"] { background-color: #1e90ff !important; color: white !important; }
+        .stButton>button, .stDownloadButton>button, .stFormSubmitButton>button, button[data-testid="stBaseButton-secondaryFormSubmit"] { background-color: #003366 !important; color: white !important; }
         .st-emotion-cache-zuyloh.emjbblw1[data-testid="stForm"] { padding: 0 !important; }
         [data-testid="stForm"] [data-testid="stNumberInput"] label { color: #003366 !important; }
     </style>
