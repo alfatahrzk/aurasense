@@ -37,15 +37,33 @@ st.markdown("""
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .navbar {
-            background-color: #004080; /* Biru sedikit lebih cerah dari header */
+            background-color: #004080;
             padding: 10px 20px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            margin: 10px 0 20px 0;
         }
         .navbar a {
             color: #ffffff !important;
             font-weight: 600;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .navbar a:last-child {
+            margin-right: 0;
+        }
+        .icon-container {
+            background-color: #004080;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .text-primary {
+            color: #003366;
+        }
+        .content-margin {
+            margin-top: 20px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -54,10 +72,10 @@ st.markdown("""
 st.markdown("""
 <div class="header">
     <h1>🏢 AuraSense Presence</h1>
-    <div class="navbar" style="background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 10px;">
-        <a href="home.py" style="color: #ffffff; font-weight: 600; text-decoration: none; margin-right: 20px;">🏠 Home</a>
-        <a href="pages/Absensi.py" style="color: #ffffff; font-weight: 600; text-decoration: none;">📸 Absen</a>
-    </div>
+    <nav class="navbar">
+        <a href="home.py">🏠 Home</a>
+        <a href="pages/Absensi.py">📸 Absen</a>
+    </nav>
 </div>
 """, unsafe_allow_html=True)
 
@@ -65,21 +83,21 @@ st.markdown("""
 with st.container():
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.markdown('<div style="background-color: #004080; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="150"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="icon-container"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="150"></div>', unsafe_allow_html=True)
     with col2:
         st.markdown("""
         <div class='content'>
-            <h3 style='color: #003366; margin-top: 0;'>Selamat Datang di AuraSense</h3>
-            <p style='color: #003366;'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
+            <h3 class='text-primary' style='margin-top: 0;'>Selamat Datang di AuraSense</h3>
+            <p class='text-primary'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
             with penyimpanan <strong>Vector Database (Qdrant)</strong>.</p>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='content' style='margin-top: 20px;'>
-        <h3 style='color: #003366;'>Menu Utama</h3>
-        <p style='color: #003366;'>Silakan pilih menu di sidebar (sebelah kiri):</p>
-        <ul style='color: #003366;'>
+    <div class='content content-margin'>
+        <h3 class='text-primary'>Menu Utama</h3>
+        <p class='text-primary'>Silakan pilih menu di sidebar (sebelah kiri):</p>
+        <ul class='text-primary'>
             <li><strong>Registrasi Wajah:</strong> (Khusus Admin) Untuk mendaftarkan karyawan baru dengan 8 pose.</li>
             <li><strong>Absensi User:</strong> (Akan dibuat selanjutnya) Untuk melakukan presensi harian.</li>
         </ul>
