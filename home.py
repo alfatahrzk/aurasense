@@ -47,18 +47,6 @@ st.markdown("""
             color: #ffffff !important;
             font-weight: 600;
         }
-        /* Target horizontal block untuk navbar */
-        [data-testid="stHorizontalBlock"] {
-            background-color: #004080;
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        [data-testid="stHorizontalBlock"] a {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -67,9 +55,9 @@ st.markdown('<div class="header"><h1>🏢 AuraSense Presence</h1></div>', unsafe
 
 # Navigation links dengan background biru (navbar)
 st.markdown("""
-<div style="display: flex; justify-content: space-between; margin: 20px 0;">
-    <a href="home.py" style="padding: 10px 20px; background-color: #1E88E5; color: white; text-decoration: none; border-radius: 5px;">🏠 Home</a>
-    <a href="pages/Absensi.py" style="padding: 10px 20px; background-color: #1E88E5; color: white; text-decoration: none; border-radius: 5px;">📸 Absen</a>
+<div class="navbar" style="background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <a href="home.py" style="color: #ffffff; font-weight: 600; text-decoration: none; margin-right: 20px;">🏠 Home</a>
+    <a href="pages/Absensi.py" style="color: #ffffff; font-weight: 600; text-decoration: none;">📸 Absen</a>
 </div>
 """, unsafe_allow_html=True)
 
