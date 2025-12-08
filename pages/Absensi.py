@@ -30,18 +30,35 @@ st.markdown("""
         .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div { background-color: #003366 !important; border-color: #003366 !important; }
         [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
+        .navbar {
+            background-color: #004080;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 10px 0 20px 0;
+        }
+        .navbar a {
+            color: #ffffff !important;
+            font-weight: 600;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .navbar a:last-child {
+            margin-right: 0;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown('<div class="header"><h1 style="color: white; margin: 0;">📸 Absensi Harian</h1></div>', unsafe_allow_html=True)
-
-# Navigation
-nav_col1, nav_col2 = st.columns([1, 1])
-with nav_col1:
-    st.page_link("home.py", label="🏠 Home")
-with nav_col2:
-    st.page_link("pages/Absensi.py", label="📸 Absen")
+# Header and Navigation Section
+st.markdown("""
+<div class="header">
+    <h1>🏢 AuraSense Presence</h1>
+    <nav class="navbar">
+        <a href="home.py">🏠 Home</a>
+        <a href="pages/Absensi.py">📸 Absen</a>
+    </nav>
+</div>
+""", unsafe_allow_html=True)
 
 # --- INISIALISASI BACKEND ---
 @st.cache_resource
