@@ -50,14 +50,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header Section
-st.markdown('<div class="header"><h1>🏢 AuraSense Presence</h1></div>', unsafe_allow_html=True)
-
-# Navigation links dengan background biru (navbar)
+# Header and Navigation Section
 st.markdown("""
-<div class="navbar" style="background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <a href="home.py" style="color: #ffffff; font-weight: 600; text-decoration: none; margin-right: 20px;">🏠 Home</a>
-    <a href="pages/Absensi.py" style="color: #ffffff; font-weight: 600; text-decoration: none;">📸 Absen</a>
+<div class="header">
+    <h1>🏢 AuraSense Presence</h1>
+    <div class="navbar" style="background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 10px;">
+        <a href="home.py" style="color: #ffffff; font-weight: 600; text-decoration: none; margin-right: 20px;">🏠 Home</a>
+        <a href="pages/Absensi.py" style="color: #ffffff; font-weight: 600; text-decoration: none;">📸 Absen</a>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
