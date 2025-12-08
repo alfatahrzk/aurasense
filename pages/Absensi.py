@@ -30,6 +30,7 @@ st.markdown("""
         .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div { background-color: #003366 !important; border-color: #003366 !important; }
         [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
+        .st-emotion-cache-1r4qj8v {color: #ffffff !important;}
     </style>
 """, unsafe_allow_html=True)
 
