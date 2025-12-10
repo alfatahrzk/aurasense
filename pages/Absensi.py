@@ -111,13 +111,21 @@ if 'absen_type' not in st.session_state:
 
 # 2. PILIH TIPE ABSENSI
 if st.session_state.get('berhasil_absen') is None:
+    # Hanya tampilkan pilihan absen jika belum berhasil absen
     st.markdown("""
     <div style='text-align: left; margin-bottom: 20px;'>
         <h3 style='color: #003366; margin-bottom: 10px;'>Pilih Jenis Absensi</h3>
     </div>
     """, unsafe_allow_html=True)
-
-    st.session_state['absen_type'] = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
+    
+    # Update nilai absen_type berdasarkan pilihan user
+    st.session_state['absen_type'] = st.radio(
+        "", 
+        ["Masuk", "Keluar"], 
+        horizontal=True, 
+        label_visibility="collapsed",
+        key="radio_absen_type"  # Menambahkan key unik
+    )
 
 absen_type = st.session_state['absen_type']
 
