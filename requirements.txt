@@ -13,3 +13,5 @@ supabase
 geopy
 requests
 streamlit-js-eval
+streamlit-folium
+folium

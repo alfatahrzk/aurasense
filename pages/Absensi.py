@@ -28,21 +28,40 @@ st.markdown("""
         .stRadio > div { background-color: #003366; padding: 10px; border-radius: 10px; }
         .stRadio > div > label { color: #ffffff !important; font-weight: 600; font-size: 16px; }
         .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div { background-color: #003366 !important; border-color: #003366 !important; }
-        [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
-        .st-emotion-cache-1r4qj8v {color: #ffffff !important;}
+        .stRadio > div[data-baseweb='radio'] > div > div > label[data-testid="stMarkdownContainer"] > span { color: #ffffff !important; }
+        .stRadio > div[data-baseweb='radio'] > div > div > label > span { color: #ffffff !important; }
+        .stRadio > div[data-baseweb='radio'] > div > div > span { color: #ffffff !important; }
+        .stRadio [data-testid="stMarkdownContainer"] span { color: #ffffff !important; }
+        .stRadio div { color: #ffffff !important; }
+        .navbar {
+            background-color: #004080;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 10px 0 20px 0;
+        }
+        .navbar a {
+            color: #ffffff !important;
+            font-weight: 600;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .navbar a:last-child {
+            margin-right: 0;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown('<div class="header"><h1 style="color: white; margin: 0;">📸 Absensi Harian</h1></div>', unsafe_allow_html=True)
-
-# Navigation
-nav_col1, nav_col2 = st.columns([1, 1])
-with nav_col1:
-    st.page_link("home.py", label="🏠 Home")
-with nav_col2:
-    st.page_link("pages/Absensi.py", label="📸 Absen")
+# Header and Navigation Section
+st.markdown("""
+<div class="header">
+    <h1>🏢 AuraSense Presence</h1>
+    <nav class="navbar">
+        <a href="home.py">🏠 Home</a>
+        <a href="pages/Absensi.py">📸 Absen</a>
+    </nav>
+</div>
+""", unsafe_allow_html=True)
 
 # --- INISIALISASI BACKEND ---
 @st.cache_resource
@@ -96,6 +115,7 @@ if 'berhasil_absen' not in st.session_state:
 # --- UI LOGIC ---
 
 if st.session_state['berhasil_absen'] is not None:
+    # --- BLOK BERHASIL ABSEN ---
     user_data = st.session_state['berhasil_absen']
     
     with st.container():
@@ -131,6 +151,7 @@ if st.session_state['berhasil_absen'] is not None:
         st.rerun()
 
 else:
+    # --- BLOK KAMERA INPUT / PROSES ABSENSI ---
     with st.container():
         st.markdown("<h3 style='color: #003366; text-align: center;'>Scan Wajah Anda</h3>", unsafe_allow_html=True)
         img_file = st.camera_input("", key="absen_cam")
@@ -146,19 +167,23 @@ else:
         if coords is None:
             st.warning("⚠️ Wajah tidak terdeteksi.")
             st.image(cv_img, channels="BGR", caption="Gagal Deteksi")
+            # Tidak perlu logging jika tidak ada wajah
         else:
             x, y, w, h = coords 
             face_crop = cv_img[y:y+h, x:x+w]
 
             with st.spinner("Mencocokkan biometrik..."):
                 input_emb = engine.get_embedding(face_crop)
+                # Dapatkan user dan score terbaik (score 0.0 agar selalu ada hasil found_user)
                 found_user, score = db.search_user(input_emb, threshold=0.0)
                                     
-                # --- CEK THRESHOLD WAJAH ---
+                # =======================================================
+                # 1. 🔍 CEK THRESHOLD WAJAH (HARUS LEBIH DULU)
+                # =======================================================
                 if found_user and score >= THRESHOLD_VAL:
                     
                     # =======================================================
-                    # 1. ⏰ VALIDASI WAKTU (LOGIKA BARU DITAMBAHKAN DI SINI)
+                    # 2. ⏰ VALIDASI WAKTU
                     # =======================================================
                     WIB = timezone(timedelta(hours=7))
                     current_time = datetime.now(WIB)
@@ -180,7 +205,7 @@ else:
                         min_duration = float(office_conf.get('min_duration_hours', '8'))
                         
                         if last_in_log:
-                            # Parsing waktu masuk (pastikan waktu_absen di log adalah string)
+                            # Parsing waktu masuk
                             time_in = datetime.strptime(last_in_log, "%Y-%m-%d %H:%M:%S").replace(tzinfo=WIB)
                             
                             time_diff = current_time - time_in
@@ -195,7 +220,7 @@ else:
                             validation_message = "Gagal: Belum ada log Absen Masuk hari ini."
                     
                     # =======================================================
-                    # 2. 💾 SIMPAN LOG BERDASARKAN VALIDASI WAKTU
+                    # 3. 💾 SIMPAN LOG BERDASARKAN VALIDASI WAKTU
                     # =======================================================
                     
                     if is_valid:                    
@@ -207,15 +232,15 @@ else:
                         cv2.putText(img_result, label_text, (x, y - 10), 
                                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                        # --- FITUR ADAPTIF (Perbaikan Indentasi) ---
+                        # --- FITUR ADAPTIF ---
                         ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
                     
                         if score >= ADAPTIVE_THRESHOLD:
                             db.add_variation(found_user, input_emb)
                             st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
-                        # ------------------------------------------
+                        # ---------------------
 
-                        # Simpan Log
+                        # Simpan Log Berhasil
                         sukses = logger.log_attendance(
                             name=found_user, 
                             status=absen_type, 
@@ -225,7 +250,7 @@ else:
                             lon=user_lon,
                             similarity=score,
                             liveness=100.0, # Dummy
-                            validation_status="Berhasil"
+                            validation_status="Berhasil" # Log status waktu
                         )
                     
                         if sukses:
@@ -241,16 +266,34 @@ else:
                         else:
                             st.error("Gagal terhubung ke Database Log.")
                     else:
-                        # Gagal
-                        st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
+                        # Gagal karena VALIDASI WAKTU
+                        st.error(f"❌ Ditolak! {validation_message}")
                         logger.log_attendance(
-                            name=f"{found_user} (Ditolak)",
-                            status="Gagal",
+                            name=found_user,
+                            status=absen_type,
                             location_dist=distance,
                             address=current_address,
                             lat=user_lat,
                             lon=user_lon,
                             similarity=score,
                             liveness=0.0,
-                            validation_status="Gagal: Skor Rendah"
+                            validation_status=validation_message # Log status waktu
                         )
+                        st.image(cv_img, channels="BGR", caption="Wajah Terdeteksi, Waktu Ditolak")
+                        
+                else:
+                    # Gagal karena SKOR WAJAH RENDAH
+                    st.error(f"❌ Ditolak! Wajah tidak dikenali atau skor terlalu rendah.\nHarap hubungi admin!")
+                    # Log kegagalan karena skor rendah
+                    logger.log_attendance(
+                        name=f"{found_user} (Ditolak)",
+                        status="Gagal",
+                        location_dist=distance,
+                        address=current_address,
+                        lat=user_lat,
+                        lon=user_lon,
+                        similarity=score,
+                        liveness=0.0,
+                        validation_status="Gagal: Skor Rendah"
+                    )
+                    st.image(cv_img, channels="BGR", caption="Skor Rendah")
