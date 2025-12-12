@@ -2,7 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from haversine import haversine, Unit
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import time
 
@@ -157,6 +157,48 @@ else:
                 # --- CEK THRESHOLD WAJAH ---
                 if found_user and score >= THRESHOLD_VAL:
                     
+                    # =======================================================
+                    # 1. ⏰ VALIDASI WAKTU (LOGIKA BARU DITAMBAHKAN DI SINI)
+                    # =======================================================
+                    WIB = timezone(timedelta(hours=7))
+                    current_time = datetime.now(WIB)
+                    is_valid = True
+                    validation_message = "Berhasil"
+
+                    if absen_type == "Masuk":
+                        max_in_hour_str = office_conf.get('max_time_in', '07:00')
+                        max_in_hour = datetime.strptime(max_in_hour_str, "%H:%M").time()
+                        
+                        # Cek apakah jam saat ini melewati batas
+                        if current_time.time() > max_in_hour:
+                            is_valid = False
+                            validation_message = f"Gagal: Terlambat (Batas {max_in_hour_str} WIB)"
+                            
+                    elif absen_type == "Keluar":
+                        # Ambil log masuk terakhir hari ini
+                        last_in_log = logger.get_last_check_in_time(found_user)
+                        min_duration = float(office_conf.get('min_duration_hours', '8'))
+                        
+                        if last_in_log:
+                            # Parsing waktu masuk (pastikan waktu_absen di log adalah string)
+                            time_in = datetime.strptime(last_in_log, "%Y-%m-%d %H:%M:%S").replace(tzinfo=WIB)
+                            
+                            time_diff = current_time - time_in
+                            min_delta = timedelta(hours=min_duration)
+                            
+                            # Cek apakah durasi kerja sudah tercapai
+                            if time_diff < min_delta:
+                                is_valid = False
+                                validation_message = f"Gagal: Durasi kerja kurang dari {min_duration} jam"
+                        else:
+                            is_valid = False
+                            validation_message = "Gagal: Belum ada log Absen Masuk hari ini."
+                    
+                    # =======================================================
+                    # 2. 💾 SIMPAN LOG BERDASARKAN VALIDASI WAKTU
+                    # =======================================================
+                    
+                    if is_valid:                    
                     # Gambar Kotak & Nama
                     img_result = cv_img.copy()
                     cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
