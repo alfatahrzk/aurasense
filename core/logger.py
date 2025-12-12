@@ -1,6 +1,6 @@
 import streamlit as st
 from supabase import create_client, Client
-from datetime import datetime, timedelta, timezone # <--- Import tambahan
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 
 class AttendanceLogger:
@@ -11,6 +11,32 @@ class AttendanceLogger:
             self.supabase: Client = create_client(url, key)
         except Exception as e:
             st.error(f"Gagal konek Supabase: {e}")
+    
+    def get_last_check_in_time(self, name):
+        """Mengambil waktu absen masuk terakhir untuk user tertentu hari ini."""
+        try:
+            # Tentukan hari ini (menggunakan WIB, karena log_attendance juga pakai WIB)
+            WIB = timezone(timedelta(hours=7))
+            today_date = datetime.now(WIB).strftime("%Y-%m-%d")
+
+            # Cari log Absen Masuk hari ini
+            response = self.supabase.table("logs")\
+                .select("waktu_absen")\
+                .eq("nama", name)\
+                .eq("status", "Masuk")\
+                .ilike("waktu_absen", f"{today_date}%")\
+                .order("waktu_absen", desc=True)\
+                .limit(1)\
+                .execute()
+                
+            if response.data:
+                # Mengembalikan string waktu_absen (misal: '2025-12-08 07:05:00')
+                return response.data[0]['waktu_absen']
+            return None
+        except Exception as e:
+            # Jika ada error koneksi, anggap tidak ada log masuk
+            # print(f"Error mencari log masuk: {e}") 
+            return None
 
     def log_attendance(self, name, status, location_dist, address, lat, lon, similarity, liveness, validation_status="Berhasil"):
         """

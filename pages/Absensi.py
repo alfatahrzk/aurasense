@@ -2,7 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from haversine import haversine, Unit
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import time
 
@@ -33,8 +33,6 @@ st.markdown("""
         .stRadio > div[data-baseweb='radio'] > div > div > span { color: #ffffff !important; }
         .stRadio [data-testid="stMarkdownContainer"] span { color: #ffffff !important; }
         .stRadio div { color: #ffffff !important; }
-        [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
         .navbar {
             background-color: #004080;
             padding: 10px 20px;
@@ -117,6 +115,7 @@ if 'berhasil_absen' not in st.session_state:
 # --- UI LOGIC ---
 
 if st.session_state['berhasil_absen'] is not None:
+    # --- BLOK BERHASIL ABSEN ---
     user_data = st.session_state['berhasil_absen']
     
     with st.container():
@@ -152,6 +151,7 @@ if st.session_state['berhasil_absen'] is not None:
         st.rerun()
 
 else:
+    # --- BLOK KAMERA INPUT / PROSES ABSENSI ---
     with st.container():
         st.markdown("<h3 style='color: #003366; text-align: center;'>Scan Wajah Anda</h3>", unsafe_allow_html=True)
         img_file = st.camera_input("", key="absen_cam")
@@ -167,62 +167,124 @@ else:
         if coords is None:
             st.warning("⚠️ Wajah tidak terdeteksi.")
             st.image(cv_img, channels="BGR", caption="Gagal Deteksi")
+            # Tidak perlu logging jika tidak ada wajah
         else:
             x, y, w, h = coords 
             face_crop = cv_img[y:y+h, x:x+w]
 
             with st.spinner("Mencocokkan biometrik..."):
                 input_emb = engine.get_embedding(face_crop)
+                # Dapatkan user dan score terbaik (score 0.0 agar selalu ada hasil found_user)
                 found_user, score = db.search_user(input_emb, threshold=0.0)
                                     
-                # --- CEK THRESHOLD WAJAH ---
+                # =======================================================
+                # 1. 🔍 CEK THRESHOLD WAJAH (HARUS LEBIH DULU)
+                # =======================================================
                 if found_user and score >= THRESHOLD_VAL:
                     
-                    # Gambar Kotak & Nama
-                    img_result = cv_img.copy()
-                    cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
-                    label_text = f"{found_user} ({score:.2f})"
-                    (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
-                    cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
-                    cv2.putText(img_result, label_text, (x, y - 10), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                    # =======================================================
+                    # 2. ⏰ VALIDASI WAKTU
+                    # =======================================================
+                    WIB = timezone(timedelta(hours=7))
+                    current_time = datetime.now(WIB)
+                    is_valid = True
+                    validation_message = "Berhasil"
 
-                    # --- FITUR ADAPTIF (Perbaikan Indentasi) ---
-                    ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
+                    if absen_type == "Masuk":
+                        max_in_hour_str = office_conf.get('max_time_in', '07:00')
+                        max_in_hour = datetime.strptime(max_in_hour_str, "%H:%M").time()
+                        
+                        # Cek apakah jam saat ini melewati batas
+                        if current_time.time() > max_in_hour:
+                            is_valid = False
+                            validation_message = f"Gagal: Terlambat (Batas {max_in_hour_str} WIB)"
+                            
+                    elif absen_type == "Keluar":
+                        # Ambil log masuk terakhir hari ini
+                        last_in_log = logger.get_last_check_in_time(found_user)
+                        min_duration = float(office_conf.get('min_duration_hours', '8'))
+                        
+                        if last_in_log:
+                            # Parsing waktu masuk
+                            time_in = datetime.strptime(last_in_log, "%Y-%m-%d %H:%M:%S").replace(tzinfo=WIB)
+                            
+                            time_diff = current_time - time_in
+                            min_delta = timedelta(hours=min_duration)
+                            
+                            # Cek apakah durasi kerja sudah tercapai
+                            if time_diff < min_delta:
+                                is_valid = False
+                                validation_message = f"Gagal: Durasi kerja kurang dari {min_duration} jam"
+                        else:
+                            is_valid = False
+                            validation_message = "Gagal: Belum ada log Absen Masuk hari ini."
                     
-                    if score >= ADAPTIVE_THRESHOLD:
-                        db.add_variation(found_user, input_emb)
-                        st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
-                    # ------------------------------------------
+                    # =======================================================
+                    # 3. 💾 SIMPAN LOG BERDASARKAN VALIDASI WAKTU
+                    # =======================================================
+                    
+                    if is_valid:                    
+                        img_result = cv_img.copy()
+                        cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
+                        label_text = f"{found_user} ({score:.2f})"
+                        (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+                        cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
+                        cv2.putText(img_result, label_text, (x, y - 10), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                    # Simpan Log
-                    sukses = logger.log_attendance(
-                        name=found_user, 
-                        status=absen_type, 
-                        location_dist=distance, 
-                        address=current_address,
-                        lat=user_lat,
-                        lon=user_lon,
-                        similarity=score,
-                        liveness=100.0, # Dummy
-                        validation_status="Berhasil"
-                    )
+                        # --- FITUR ADAPTIF ---
+                        ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
                     
-                    if sukses:
-                        st.session_state['berhasil_absen'] = {
-                            'nama': found_user,
-                            'skor': f"{score:.4f}",
-                            'waktu': (datetime.now() + timedelta(hours=7)).strftime('%H:%M:%S'), 
-                            'jarak': f"{distance:.3f}",
-                            'alamat': current_address,
-                            'foto_bukti': img_result
-                        }
-                        st.rerun()
+                        if score >= ADAPTIVE_THRESHOLD:
+                            db.add_variation(found_user, input_emb)
+                            st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
+                        # ---------------------
+
+                        # Simpan Log Berhasil
+                        sukses = logger.log_attendance(
+                            name=found_user, 
+                            status=absen_type, 
+                            location_dist=distance, 
+                            address=current_address,
+                            lat=user_lat,
+                            lon=user_lon,
+                            similarity=score,
+                            liveness=100.0, # Dummy
+                            validation_status="Berhasil" # Log status waktu
+                        )
+                    
+                        if sukses:
+                            st.session_state['berhasil_absen'] = {
+                                'nama': found_user,
+                                'skor': f"{score:.4f}",
+                                'waktu': (datetime.now() + timedelta(hours=7)).strftime('%H:%M:%S'), 
+                                'jarak': f"{distance:.3f}",
+                                'alamat': current_address,
+                               'foto_bukti': img_result
+                            }
+                            st.rerun()
+                        else:
+                            st.error("Gagal terhubung ke Database Log.")
                     else:
-                        st.error("Gagal terhubung ke Database Log.")
+                        # Gagal karena VALIDASI WAKTU
+                        st.error(f"❌ Ditolak! {validation_message}")
+                        logger.log_attendance(
+                            name=found_user,
+                            status=absen_type,
+                            location_dist=distance,
+                            address=current_address,
+                            lat=user_lat,
+                            lon=user_lon,
+                            similarity=score,
+                            liveness=0.0,
+                            validation_status=validation_message # Log status waktu
+                        )
+                        st.image(cv_img, channels="BGR", caption="Wajah Terdeteksi, Waktu Ditolak")
+                        
                 else:
-                    # Gagal
-                    st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
+                    # Gagal karena SKOR WAJAH RENDAH
+                    st.error(f"❌ Ditolak! Wajah tidak dikenali atau skor terlalu rendah.\nHarap hubungi admin!")
+                    # Log kegagalan karena skor rendah
                     logger.log_attendance(
                         name=f"{found_user} (Ditolak)",
                         status="Gagal",
@@ -234,3 +296,4 @@ else:
                         liveness=0.0,
                         validation_status="Gagal: Skor Rendah"
                     )
+                    st.image(cv_img, channels="BGR", caption="Skor Rendah")
